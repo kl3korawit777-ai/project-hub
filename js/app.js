@@ -1,7 +1,7 @@
 import { configured, getSession, onAuthChange, signInWithEmail, signOut, listProjectOverview, createProject, updateProject, deleteProject } from './db.js';
 import { STATUS_ORDER, thaiToday, daysLeft, makeSlug, validateProject } from './util.js';
 import { chipsHtml, dueHtml, skeletonHtml, cardHtml, formHtml, extraRow, confirmHtml, toast } from './ui.js';
-import { initDetail, showDetail, hideDetail, isOpen } from './detail.js';
+import { initDetail, showDetail, hideDetail, isOpen, refreshDetail } from './detail.js';
 import { ganttHtml } from './gantt.js';
 import { initLinks, showLinks } from './links.js';
 import { loadProjects, saveProjects, clearCache, formatAt } from './cache.js';
@@ -169,8 +169,8 @@ $('logout').addEventListener('click', async () => {
 });
 
 // ---------- data / render ----------
-async function load() {
-  $('grid').innerHTML = skeletonHtml();
+async function load(quiet = false) {
+  if (!quiet) $('grid').innerHTML = skeletonHtml();
   try {
     state.projects = await listProjectOverview();
     saveProjects(state.projects);
@@ -178,6 +178,7 @@ async function load() {
   } catch (e) {
     const cached = loadProjects();
     if (!cached) {
+      if (quiet) return;
       $('grid').innerHTML = `<div class="empty">โหลดข้อมูลไม่สำเร็จ: ${e.message.replace(/[<>&]/g, '')}</div>`;
       return;
     }
@@ -371,6 +372,18 @@ function openForm(project) {
 }
 
 initLinks();
+
+// กลับมาที่แท็บ: ดึงข้อมูลใหม่ เพื่อให้เห็นสิ่งที่ AI เพิ่งอัปเดต (ข้ามถ้ากำลังเปิดฟอร์มหรือพิมพ์อยู่)
+let lastRefresh = 0;
+document.addEventListener('visibilitychange', async () => {
+  if (document.hidden || !state.authed || isOffline()) return;
+  if (Date.now() - lastRefresh < 15000) return;
+  if (!modal.hidden) return;
+  lastRefresh = Date.now();
+  await load(true);
+  if (state.view === 'links') showLinks();
+  await refreshDetail();
+});
 
 // ---------- start ----------
 $('today').textContent = thaiToday();

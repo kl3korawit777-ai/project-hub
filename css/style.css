@@ -1,5 +1,5 @@
-:root{--st-active:#168a4a;--st-planning:#0A8FB0;--st-paused:#b7791f;--st-idea:#7a8ea3;--st-done:#5b6b7c;--bg:#EAF0F5;--fg:#0B1828;--primary:#0A8FB0;--card:#fff;--muted:#53657a;--line:#cfdbe5;--ok:#168a4a;--bad:#c0392b;--shadow:0 1px 2px rgba(11,24,40,.06),0 6px 18px rgba(11,24,40,.06)}
-@media (prefers-color-scheme:dark){:root{--st-active:#43c57a;--st-planning:#2fb6d8;--st-paused:#f0b455;--st-idea:#8aa0b5;--st-done:#9bb0c4;--bg:#0B1828;--fg:#E6EEF5;--card:#12263b;--muted:#9bb0c4;--line:#223a54;--primary:#2fb6d8;--ok:#43c57a;--bad:#ff7a6b;--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25)}}
+:root{--st-active:#168a4a;--st-planning:#0A8FB0;--st-paused:#b7791f;--st-idea:#7c5cd6;--st-done:#5b6b7c;--bg:#EAF0F5;--fg:#0B1828;--primary:#0A8FB0;--card:#fff;--muted:#53657a;--line:#cfdbe5;--ok:#168a4a;--bad:#c0392b;--shadow:0 1px 2px rgba(11,24,40,.06),0 6px 18px rgba(11,24,40,.06)}
+@media (prefers-color-scheme:dark){:root{--st-active:#43c57a;--st-planning:#2fb6d8;--st-paused:#f0b455;--st-idea:#a78bfa;--st-done:#9bb0c4;--bg:#0B1828;--fg:#E6EEF5;--card:#12263b;--muted:#9bb0c4;--line:#223a54;--primary:#2fb6d8;--ok:#43c57a;--bad:#ff7a6b;--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25)}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 'IBM Plex Sans Thai',system-ui,sans-serif;overflow-x:hidden}
@@ -102,6 +102,20 @@ legend{color:var(--muted);font-size:.9rem;padding:0 4px}
   .extra [data-k=url]{grid-column:1}
   #new{flex:1 1 auto}
 }
+
+/* ---------- AI ---------- */
+.s-idea{color:var(--st-idea);border-color:var(--st-idea)}
+.ai-badge{display:inline-flex;align-items:center;font:600 .7rem 'IBM Plex Mono',monospace;padding:0 8px;border-radius:99px;line-height:20px;color:var(--st-idea);border:1px solid var(--st-idea);background:color-mix(in srgb,var(--st-idea) 14%,transparent);vertical-align:middle;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reveal{display:grid;gap:8px;border:2px solid var(--st-paused);background:color-mix(in srgb,var(--st-paused) 12%,var(--card));border-radius:12px;padding:12px;margin:12px 0}
+.token-box{overflow-wrap:anywhere;word-break:break-all;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:.8rem;user-select:all}
+.reveal-btns{display:flex;gap:8px;flex-wrap:wrap}
+.fallback-copy{font:.8rem 'IBM Plex Mono',monospace;margin:0}
+.tk-list{list-style:none;margin:0;padding:0}
+.tk{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:6px}
+.tk.revoked{opacity:.5}
+.tk-name{min-width:0;overflow-wrap:anywhere}
+.tk-meta{grid-column:1/-1}
+.tk-act .confirm-inline{margin:0}
 
 /* ---------- PWA: แถบออฟไลน์/เวอร์ชันใหม่ ---------- */
 .note-bar{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:6px 16px;font-size:.9rem;font-weight:600;border-top:1px solid var(--line)}

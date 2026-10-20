@@ -96,6 +96,27 @@ export async function deleteUpdate(id) {
   if (error) throw error;
 }
 
+// token ของ AI: อ่านได้เฉพาะคอลัมน์ที่ระบุ (token_hash ถูก revoke ไว้ ห้าม select *)
+export async function listAgentTokens(projectId) {
+  const { data, error } = await need().from('hub_agent_tokens')
+    .select('id,label,token_hint,created_at,last_used_at,revoked_at')
+    .eq('project_id', projectId).order('created_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+// คืน { id, token, hint, label } — token จริงได้มาครั้งเดียวตอนสร้างเท่านั้น
+export async function createAgentToken(projectId, label) {
+  const { data, error } = await need().rpc('hub_create_agent_token', { p_project_id: projectId, p_label: label });
+  if (error) throw error;
+  return data;
+}
+
+export async function revokeAgentToken(tokenId) {
+  const { error } = await need().rpc('hub_revoke_agent_token', { p_token_id: tokenId });
+  if (error) throw error;
+}
+
 export async function listProjectLinks() {
   const { data, error } = await need().from('hub_projects').select('id,name,web_url').order('name');
   if (error) throw error;

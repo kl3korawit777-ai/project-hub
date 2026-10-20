@@ -96,17 +96,24 @@ revoke all on public.hub_projects, public.hub_milestones, public.hub_updates fro
 grant select, insert, update, delete on public.hub_projects, public.hub_milestones, public.hub_updates to authenticated;
 
 -- ---------- view ----------
-create or replace view public.hub_project_overview with (security_invoker = true) as
-select p.*,
-  (select count(*) from public.hub_milestones m where m.project_id = p.id)::int as milestones_total,
-  (select count(*) from public.hub_milestones m where m.project_id = p.id and m.done)::int as milestones_done,
-  lu.date as last_update_date,
-  lu.note as last_update_note
-from public.hub_projects p
-left join lateral (
-  select u.date, u.note from public.hub_updates u
-  where u.project_id = p.id order by u.date desc, u.id desc limit 1
-) lu on true;
+-- สร้างเฉพาะเมื่อยังไม่มี: ถ้าเคยรัน 002_agent_access.sql แล้ว view จะมีคอลัมน์ last_update_source/agent
+-- การรัน schema.sql ซ้ำต้องไม่ทับ view นั้นด้วยเวอร์ชันเก่า
+do $do$
+begin
+  if not exists (select 1 from pg_views where schemaname = 'public' and viewname = 'hub_project_overview') then
+    create view public.hub_project_overview with (security_invoker = true) as
+    select p.*,
+      (select count(*) from public.hub_milestones m where m.project_id = p.id)::int as milestones_total,
+      (select count(*) from public.hub_milestones m where m.project_id = p.id and m.done)::int as milestones_done,
+      lu.date as last_update_date,
+      lu.note as last_update_note
+    from public.hub_projects p
+    left join lateral (
+      select u.date, u.note from public.hub_updates u
+      where u.project_id = p.id order by u.date desc, u.id desc limit 1
+    ) lu on true;
+  end if;
+end $do$;
 
 revoke all on public.hub_project_overview from anon;
 grant select on public.hub_project_overview to authenticated;

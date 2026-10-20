@@ -3,6 +3,7 @@ import { percent } from './util.js';
 import { headHtml, linksHtml, schedHtml, msHtml, upsHtml, toast, RING_C } from './ui.js';
 import { isOffline, onOfflineChange } from './net.js';
 import { saveDetail, loadDetail } from './cache.js';
+import { initAgent, showAgent, hideAgent, refreshAgent } from './agent.js';
 
 // ออฟไลน์ = อ่านอย่างเดียว: ปิดปุ่ม/ช่องแก้ไขทั้งหมดในหน้านี้
 const LOCK = '[data-d-edit],[data-d-addupd],.ms-check,.grip,[data-ms-del],[data-up-del],#ms-add input,#ms-add button,#up-add input,#up-add textarea,#up-add button';
@@ -40,7 +41,7 @@ function setRing(animate = true) {
   const set = () => { ring.querySelector('.ring-fg').style.strokeDashoffset = RING_C * (1 - pct / 100); };
   if (animate) { ring.getBoundingClientRect(); setTimeout(set, 30); } else set();
 }
-function renderHead() { $('d-head').innerHTML = headHtml(cur, curPct()); setRing(); lock(); }
+function renderHead(animate = true) { $('d-head').innerHTML = headHtml(cur, curPct()); setRing(animate); lock(); }
 function renderLinks() { $('d-links').innerHTML = linksHtml(cur); lock(); }
 function renderSched() { $('d-sched').innerHTML = schedHtml(cur); }
 function renderMs() { $('d-ms').innerHTML = msHtml(ms); lock(); }
@@ -58,6 +59,8 @@ function sync() {
     milestones_done: ms.filter((m) => m.done).length,
     last_update_date: last ? last.date : null,
     last_update_note: last ? last.note : null,
+    last_update_source: last ? last.source || 'owner' : null,
+    last_update_agent: last ? last.agent_label || null : null,
     updated_at: new Date().toISOString(),
   });
 }
@@ -69,13 +72,14 @@ export async function showDetail(p) {
   const same = cur && cur.id === p.id;
   cur = p;
   const panel = $('detail');
-  if (same) { renderHead(); renderLinks(); renderSched(); return; }
+  if (same) { renderHead(false); renderLinks(); renderSched(); showAgent(p); return; }
 
   clearTimeout(closeTimer);
   ms = null; ups = null; delUp = null;
   const t = ++token;
   if (panel.hidden) returnFocus = document.activeElement;
   renderAll();
+  showAgent(p);
   panel.hidden = false;
   panel.scrollTop = 0;
   document.body.classList.add('has-detail');
@@ -102,12 +106,37 @@ export async function showDetail(p) {
 export function hideDetail() {
   if (!cur && $('detail').hidden) return;
   cur = null; ms = null; ups = null; token++;
+  hideAgent(); // ล้าง token ที่เพิ่งสร้างออกจากหน้าจอและหน่วยความจำ
   const panel = $('detail');
   panel.classList.remove('open');
   document.body.classList.remove('has-detail');
   closeTimer = setTimeout(() => { panel.hidden = true; }, 280);
   if (returnFocus && returnFocus.isConnected) returnFocus.focus({ preventScroll: true });
   returnFocus = null;
+}
+
+// กำลังพิมพ์/ลากอยู่ในหน้านี้หรือไม่ (ห้ามรีเฟรชทับ)
+function busyEditing() {
+  const el = document.activeElement;
+  const typing = el && $('detail').contains(el) && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) && el.type !== 'checkbox';
+  return !!typing || !!document.querySelector('#detail .ms.dragging');
+}
+
+// ดึงขั้นตอน/ประวัติอัปเดต/token ใหม่แบบเงียบๆ (เรียกตอนกลับมาที่แท็บ เพื่อเห็นสิ่งที่ AI เพิ่งแก้)
+export async function refreshDetail() {
+  if (!cur || !loaded() || isOffline()) return;
+  const id = cur.id;
+  const t = token;
+  try {
+    const [a, b] = await Promise.all([db.listMilestones(id), db.listUpdates(id)]);
+    if (t !== token || !cur || cur.id !== id || busyEditing()) return;
+    if (JSON.stringify(a) !== JSON.stringify(ms) || JSON.stringify(b) !== JSON.stringify(ups)) {
+      ms = a; ups = b;
+      saveDetail(id, ms, ups);
+      renderMs(); renderUps(); setRing(false);
+    }
+    refreshAgent();
+  } catch (e) { /* เงียบ: ลองใหม่ครั้งหน้า */ }
 }
 
 // ---------- milestones ----------
@@ -306,6 +335,7 @@ async function copyPath(btn) {
 // ---------- events ----------
 export function initDetail(c) {
   ctx = c;
+  initAgent();
   const panel = $('detail');
 
   panel.addEventListener('click', (e) => {

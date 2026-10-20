@@ -1,13 +1,13 @@
 // Service worker ของ Project Hub
 // ทุกครั้งที่แก้ไฟล์เว็บแล้ว deploy ต้องเพิ่มเลข VERSION นี้ เพื่อให้เครื่องที่ติดตั้งไว้เห็น "มีเวอร์ชันใหม่"
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL_CACHE = `hub-shell-${VERSION}`;
 const RUNTIME_CACHE = 'hub-runtime-v1'; // ฟอนต์และไลบรารีจาก CDN (ไม่ผูกกับ VERSION)
 
 const SHELL = [
   './', 'index.html', 'manifest.json', 'css/style.css',
   'js/app.js', 'js/config.js', 'js/db.js', 'js/detail.js', 'js/gantt.js', 'js/links.js',
-  'js/ui.js', 'js/util.js', 'js/cache.js', 'js/net.js', 'js/pwa.js',
+  'js/ui.js', 'js/util.js', 'js/cache.js', 'js/net.js', 'js/pwa.js', 'js/agent.js', 'js/agent-prompt.js',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png',
 ];
 const CDN_HOSTS = ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];

@@ -1,5 +1,8 @@
 import { esc, STATUS_LABEL, percent, shortThaiDate, daysLeft, isHttp, todayStr, scheduleInfo } from './util.js';
 
+// ป้ายบอกว่าอัปเดตนี้มาจาก AI (สีม่วงเดียวกับสถานะ idea)
+export const aiBadge = (label) => `<span class="ai-badge" title="บันทึกโดย AI">AI${label ? ' · ' + esc(label) : ''}</span>`;
+
 export function chipsHtml(counts, current) {
   const items = [['all', 'ทั้งหมด'], ['active', STATUS_LABEL.active], ['planning', STATUS_LABEL.planning],
     ['paused', STATUS_LABEL.paused], ['idea', STATUS_LABEL.idea], ['done', STATUS_LABEL.done]];
@@ -45,7 +48,7 @@ export function cardHtml(p, i) {
     ${tags ? `<div class="tags">${tags}</div>` : ''}
     <div class="bar"><i style="--w:${pct}%"></i></div>
     <div class="row muted small"><span class="mono">${pct}%</span><span>${p.milestones_done}/${p.milestones_total} ขั้นเสร็จแล้ว</span></div>
-    ${p.last_update_note ? `<p class="note">${esc(p.last_update_note)}</p>` : ''}
+    ${p.last_update_note ? `<p class="note">${p.last_update_source === 'agent' ? aiBadge(p.last_update_agent) + ' ' : ''}${esc(p.last_update_note)}</p>` : ''}
     <div class="row small">
       <span class="muted mono">${esc(range)}</span>
       <span class="inds">${ind('WEB', p.web_url, true)}${ind('GIT', p.github_url, true)}${ind('DIR', p.folder_path, false)}</span>
@@ -161,7 +164,8 @@ export function msHtml(ms) {
 export function upsHtml(ups, delId) {
   const list = ups === null ? '<div class="skel-line"></div>' : ups.length
     ? `<ol class="tl">${ups.map((u) => `<li><div class="tl-h"><span class="mono">${esc(shortThaiDate(u.date))}</span>
-        ${u.version ? `<span class="tag">v${esc(u.version)}</span>` : ''}
+        ${u.version ? `<span class="tag">v${esc(String(u.version).replace(/^v/i, ''))}</span>` : ''}
+        ${u.source === 'agent' ? aiBadge(u.agent_label) : ''}
         ${delId === u.id
     ? '<span class="confirm-inline">ลบรายการนี้? <button type="button" class="danger sm" data-up-yes>ลบ</button> <button type="button" class="ghost sm" data-up-no>ยกเลิก</button></span>'
     : `<button type="button" class="ghost icon" data-up-del="${esc(u.id)}" aria-label="ลบอัปเดต">✕</button>`}</div>

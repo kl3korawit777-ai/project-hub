@@ -37,6 +37,20 @@ export function daysLeft(endDate) {
   return Math.round((end - today) / 86400000);
 }
 
+// "เมื่อสักครู่" / "3 ชม.ที่แล้ว" / "ยังไม่เคยใช้"
+export function timeAgo(iso) {
+  if (!iso) return 'ยังไม่เคยใช้';
+  const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return 'เมื่อสักครู่';
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} นาทีที่แล้ว`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} ชม.ที่แล้ว`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d} วันที่แล้ว`;
+  return shortThaiDate(new Date(iso));
+}
+
 export function todayStr(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
