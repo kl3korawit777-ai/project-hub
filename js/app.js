@@ -2,9 +2,41 @@ import { configured, getSession, onAuthChange, signInWithEmail, signOut, listPro
 import { STATUS_ORDER, thaiToday, daysLeft, makeSlug, validateProject } from './util.js';
 import { chipsHtml, dueHtml, skeletonHtml, cardHtml, formHtml, extraRow, confirmHtml, toast } from './ui.js';
 import { initDetail, showDetail, hideDetail, isOpen } from './detail.js';
+import { ganttHtml } from './gantt.js';
+
+// ---------- ไทม์ไลน์ ----------
+function ganttCollapsed() {
+  try { return localStorage.getItem(GANTT_KEY) === '1'; } catch (e) { return false; }
+}
+
+function renderGantt() {
+  const box = $('gantt');
+  const scroller = box.querySelector('.g-scroll');
+  const left = scroller ? scroller.scrollLeft : 0;
+  const html = ganttHtml(state.shown, { selectedId: state.selectedId, collapsed: ganttCollapsed(), animate: state.ganttAnim });
+  box.innerHTML = html;
+  if (html) state.ganttAnim = false;
+  const next = box.querySelector('.g-scroll');
+  if (!next) return;
+  const line = next.querySelector('.g-tl');
+  if (left) {
+    next.scrollLeft = left;
+  } else if (state.ganttAnim === false && line && !box.dataset.centered) {
+    // แสดงครั้งแรก: เลื่อนให้เส้น "วันนี้" อยู่กลางกล่อง
+    const dx = line.getBoundingClientRect().left - next.getBoundingClientRect().left + next.scrollLeft;
+    next.scrollLeft = Math.max(0, dx - next.clientWidth / 2);
+    box.dataset.centered = '1';
+  }
+}
+
+function markSelected(id) {
+  state.selectedId = id;
+  document.querySelectorAll('#gantt .g-row[data-id]').forEach((r) => r.classList.toggle('sel', r.dataset.id === id));
+}
 
 const $ = (id) => document.getElementById(id);
-const state = { projects: [], status: 'all', q: '', loaded: false };
+const state = { projects: [], status: 'all', q: '', loaded: false, shown: [], selectedId: null, ganttAnim: true };
+const GANTT_KEY = 'hub.gantt.collapsed';
 let lastFocus = null;
 
 // ---------- auth / shell ----------
@@ -17,6 +49,7 @@ function showShell(session) {
   if (!session) {
     state.projects = [];
     state.loaded = false;
+    state.ganttAnim = true;
     hideDetail();
   }
 }
@@ -26,15 +59,17 @@ let navigated = false;
 
 function route() {
   const m = /^#p=(.+)$/.exec(location.hash);
-  if (!m) { navigated = false; hideDetail(); return; }
+  if (!m) { navigated = false; markSelected(null); hideDetail(); return; }
   if (!state.loaded) return;
   let key = m[1];
   try { key = decodeURIComponent(key); } catch (e) { /* ใช้ค่าเดิม */ }
   const p = state.projects.find((x) => x.slug === key) || state.projects.find((x) => x.id === key);
   if (p) {
+    markSelected(p.id);
     showDetail(p);
   } else {
     navigated = false;
+    markSelected(null);
     history.replaceState(null, '', location.pathname + location.search);
     hideDetail();
   }
@@ -107,6 +142,8 @@ function render() {
     .sort((a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status)
       || new Date(b.updated_at) - new Date(a.updated_at));
 
+  state.shown = shown;
+  renderGantt();
   $('count').textContent = `${state.projects.length} โปรเจกต์`;
   $('chips').innerHTML = chipsHtml(counts, state.status);
 
@@ -134,6 +171,16 @@ function openFromEvent(e) {
 }
 $('grid').addEventListener('click', openFromEvent);
 $('due').addEventListener('click', openFromEvent);
+$('gantt').addEventListener('click', (e) => {
+  if (e.target.closest('[data-g-toggle]')) {
+    const next = !ganttCollapsed();
+    try { localStorage.setItem(GANTT_KEY, next ? '1' : '0'); } catch (err) { /* ไม่มี storage */ }
+    state.ganttAnim = !next;
+    renderGantt();
+    return;
+  }
+  openFromEvent(e);
+});
 $('grid').addEventListener('keydown', (e) => {
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-open]')) { e.preventDefault(); openFromEvent(e); }
 });
