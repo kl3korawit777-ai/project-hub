@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Project Hub · ทดสอบระบบ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;700&family=IBM+Plex+Mono&family=IBM+Plex+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main>
+  <header><h1>Project Hub</h1><button id="logout" class="ghost" hidden>ออกจากระบบ</button></header>
+  <section class="card">
+    <h2>ทดสอบระบบ</h2>
+    <div id="c1" class="check"></div><div id="c2" class="check"></div><div id="c3" class="check"></div>
+  </section>
+  <section class="card" id="login">
+    <h2>ล็อกอิน</h2>
+    <form id="form"><input id="email" type="email" required placeholder="อีเมล" autocomplete="email"><button>ส่งลิงก์ล็อกอิน</button></form>
+    <p id="msg" class="muted"></p>
+  </section>
+  <section class="card"><h2>โปรเจกต์</h2><div id="list"></div></section>
+</main>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
