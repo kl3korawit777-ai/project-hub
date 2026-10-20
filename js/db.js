@@ -96,6 +96,12 @@ export async function deleteUpdate(id) {
   if (error) throw error;
 }
 
+export async function listProjectLinks() {
+  const { data, error } = await need().from('hub_projects').select('id,name,web_url').order('name');
+  if (error) throw error;
+  return data;
+}
+
 export async function listProjectOverview() {
   const { data, error } = await need().from('hub_project_overview').select('*').order('updated_at', { ascending: false });
   if (error) throw error;

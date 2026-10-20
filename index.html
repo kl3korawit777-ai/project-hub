@@ -16,7 +16,8 @@
       <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--primary)"/><path d="M9 22V10h6.5a3.5 3.5 0 010 7H9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Project Hub</span>
     </a>
-    <span id="count" class="muted mono small"></span>
+    <nav class="nav" aria-label="มุมมอง"><a id="nav-home" href="#" aria-current="page">ภาพรวม</a><a id="nav-links" href="#links">ลิงก์เว็บ</a></nav>
+    <span id="count"class="muted mono small"></span>
     <input id="q" type="search" class="search" placeholder="ค้นหาชื่อ คำอธิบาย แท็ก" aria-label="ค้นหา" autocomplete="off">
     <button id="new" type="button">+ โปรเจกต์ใหม่</button>
     <button id="logout" type="button" class="ghost" hidden>ออก</button>
@@ -30,6 +31,14 @@
     <h2>ล็อกอิน</h2>
     <form id="form"><input id="email" type="email" required placeholder="อีเมล" autocomplete="email"><button>ส่งลิงก์ล็อกอิน</button></form>
     <p id="msg" class="muted"></p>
+  </section>
+
+  <section id="linksview" hidden>
+    <div class="l-search">
+      <input id="lq" type="text" inputmode="search" enterkeyhint="go" placeholder="ค้นหาชื่อหรือลิงก์…" aria-label="ค้นหาชื่อหรือลิงก์" autocomplete="off" spellcheck="false">
+      <button id="lclear" type="button" class="l-clear" aria-label="ล้างคำค้น" hidden>✕</button>
+    </div>
+    <ul id="llist" class="l-list"></ul>
   </section>
 
   <section id="app" hidden>

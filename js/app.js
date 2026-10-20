@@ -3,6 +3,7 @@ import { STATUS_ORDER, thaiToday, daysLeft, makeSlug, validateProject } from './
 import { chipsHtml, dueHtml, skeletonHtml, cardHtml, formHtml, extraRow, confirmHtml, toast } from './ui.js';
 import { initDetail, showDetail, hideDetail, isOpen } from './detail.js';
 import { ganttHtml } from './gantt.js';
+import { initLinks, showLinks } from './links.js';
 
 // ---------- ไทม์ไลน์ ----------
 function ganttCollapsed() {
@@ -42,14 +43,18 @@ let lastFocus = null;
 // ---------- auth / shell ----------
 function showShell(session) {
   document.body.classList.toggle('authed', !!session);
+  state.authed = !!session;
   $('login').hidden = !!session;
   $('app').hidden = !session;
+  $('linksview').hidden = !session;
   $('logout').hidden = !session;
   $('cfg-warn').hidden = configured;
   if (!session) {
     state.projects = [];
     state.loaded = false;
     state.ganttAnim = true;
+    state.view = null;
+    document.body.classList.remove('view-links');
     hideDetail();
   }
 }
@@ -58,6 +63,20 @@ function showShell(session) {
 let navigated = false;
 
 function route() {
+  if (!state.authed) return;
+  const links = location.hash === '#links';
+  document.body.classList.toggle('view-links', links);
+  $('nav-home').setAttribute('aria-current', links ? 'false' : 'page');
+  $('nav-links').setAttribute('aria-current', links ? 'page' : 'false');
+  if (links) {
+    navigated = false;
+    markSelected(null);
+    hideDetail();
+    if (state.view !== 'links') showLinks();
+    state.view = 'links';
+    return;
+  }
+  state.view = 'home';
   const m = /^#p=(.+)$/.exec(location.hash);
   if (!m) { navigated = false; markSelected(null); hideDetail(); return; }
   if (!state.loaded) return;
@@ -96,7 +115,10 @@ window.addEventListener('hashchange', route);
 
 async function onSession(session) {
   showShell(session);
-  if (session) await load();
+  if (session) {
+    route(); // เปิด #links ได้ทันทีโดยไม่ต้องรอโหลดภาพรวม
+    await load();
+  }
 }
 
 $('form').addEventListener('submit', async (ev) => {
@@ -303,6 +325,8 @@ function openForm(project) {
     }
   });
 }
+
+initLinks();
 
 // ---------- start ----------
 $('today').textContent = thaiToday();
