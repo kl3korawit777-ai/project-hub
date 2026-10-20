@@ -33,6 +33,21 @@ export async function signOut() {
   if (error) throw error;
 }
 
+export async function createProject(row) {
+  const { error } = await need().from('hub_projects').insert(row);
+  if (error) throw error;
+}
+
+export async function updateProject(id, row) {
+  const { error } = await need().from('hub_projects').update(row).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteProject(id) {
+  const { error } = await need().from('hub_projects').delete().eq('id', id);
+  if (error) throw error;
+}
+
 export async function listProjectOverview() {
   const { data, error } = await need().from('hub_project_overview').select('*').order('updated_at', { ascending: false });
   if (error) throw error;

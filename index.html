@@ -3,26 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Project Hub · ทดสอบระบบ</title>
+<title>Project Hub · คลังโปรเจกต์</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;700&family=IBM+Plex+Mono&family=IBM+Plex+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="./" aria-label="Project Hub">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--primary)"/><path d="M9 22V10h6.5a3.5 3.5 0 010 7H9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Project Hub</span>
+    </a>
+    <span id="count" class="muted mono small"></span>
+    <input id="q" type="search" class="search" placeholder="ค้นหาชื่อ คำอธิบาย แท็ก" aria-label="ค้นหา" autocomplete="off">
+    <button id="new" type="button">+ โปรเจกต์ใหม่</button>
+    <button id="logout" type="button" class="ghost" hidden>ออก</button>
+  </div>
+</header>
+
 <main>
-  <header><h1>Project Hub</h1><button id="logout" class="ghost" hidden>ออกจากระบบ</button></header>
-  <section class="card">
-    <h2>ทดสอบระบบ</h2>
-    <div id="c1" class="check"></div><div id="c2" class="check"></div><div id="c3" class="check"></div>
-  </section>
-  <section class="card" id="login">
+  <p id="cfg-warn" class="warn" hidden>ยังไม่ได้ตั้งค่า js/config.js</p>
+
+  <section id="login" class="card" hidden>
     <h2>ล็อกอิน</h2>
     <form id="form"><input id="email" type="email" required placeholder="อีเมล" autocomplete="email"><button>ส่งลิงก์ล็อกอิน</button></form>
     <p id="msg" class="muted"></p>
   </section>
-  <section class="card"><h2>โปรเจกต์</h2><div id="list"></div></section>
+
+  <section id="app" hidden>
+    <div class="hero"><h1>คลังโปรเจกต์</h1><span id="today" class="muted"></span></div>
+    <div id="chips" class="chips"></div>
+    <div id="due"></div>
+    <div id="grid" class="grid"></div>
+  </section>
 </main>
+
+<div id="modal" class="modal" hidden><div id="sheet" class="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="toasts" class="toasts" aria-live="polite"></div>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>
