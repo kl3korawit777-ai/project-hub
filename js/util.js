@@ -37,7 +37,35 @@ export function daysLeft(endDate) {
   return Math.round((end - today) / 86400000);
 }
 
-export const percent = (p) => (p.milestones_total ? Math.round((p.milestones_done / p.milestones_total) * 100) : 0);
+export function todayStr(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const dayDiff = (a, b) => Math.round((b - a) / 86400000);
+
+// ข้อความกำหนดการ: { day, left }
+export function scheduleInfo(p) {
+  const start = parseDate(p.start_date);
+  const end = parseDate(p.end_date);
+  const today = parseDate(todayStr());
+  let day = null;
+  let left = null;
+  if (p.status === 'done') {
+    if (start) {
+      const e = end || parseDate(todayStr(new Date(p.updated_at)));
+      left = `ใช้เวลา ${Math.max(1, dayDiff(start, e) + 1)} วัน`;
+    }
+    return { day, left };
+  }
+  if (start && today >= start) day = `วันที่ ${dayDiff(start, today) + 1}`;
+  if (end) {
+    const d = dayDiff(today, end);
+    left = d >= 0 ? `เหลือ ${d} วัน` : `เลย ${-d} วัน`;
+  }
+  return { day, left };
+}
+
+export const percent =(p) => (p.milestones_total ? Math.round((p.milestones_done / p.milestones_total) * 100) : 0);
 
 export const isHttp = (s) => /^https?:\/\/\S+$/i.test(s);
 

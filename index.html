@@ -40,7 +40,16 @@
   </section>
 </main>
 
-<div id="modal" class="modal" hidden><div id="sheet" class="sheet" role="dialog" aria-modal="true"></div></div>
+<aside id="detail" class="detail" role="region" aria-label="รายละเอียดโปรเจกต์" hidden>
+  <div class="d-bar"><button id="d-back" type="button" class="ghost">← กลับ</button></div>
+  <div id="d-head"></div>
+  <section id="d-links" class="d-sec"></section>
+  <section id="d-sched" class="d-sec"></section>
+  <section id="d-ms" class="d-sec"></section>
+  <section id="d-ups" class="d-sec"></section>
+</aside>
+
+<div id="modal"class="modal" hidden><div id="sheet" class="sheet" role="dialog" aria-modal="true"></div></div>
 <div id="toasts" class="toasts" aria-live="polite"></div>
 <script type="module" src="js/app.js"></script>
 </body>

@@ -1,6 +1,7 @@
 import { configured, getSession, onAuthChange, signInWithEmail, signOut, listProjectOverview, createProject, updateProject, deleteProject } from './db.js';
 import { STATUS_ORDER, thaiToday, daysLeft, makeSlug, validateProject } from './util.js';
 import { chipsHtml, dueHtml, skeletonHtml, cardHtml, formHtml, extraRow, confirmHtml, toast } from './ui.js';
+import { initDetail, showDetail, hideDetail, isOpen } from './detail.js';
 
 const $ = (id) => document.getElementById(id);
 const state = { projects: [], status: 'all', q: '', loaded: false };
@@ -13,7 +14,50 @@ function showShell(session) {
   $('app').hidden = !session;
   $('logout').hidden = !session;
   $('cfg-warn').hidden = configured;
+  if (!session) {
+    state.projects = [];
+    state.loaded = false;
+    hideDetail();
+  }
 }
+
+// ---------- routing (#p=<slug|id>) ----------
+let navigated = false;
+
+function route() {
+  const m = /^#p=(.+)$/.exec(location.hash);
+  if (!m) { navigated = false; hideDetail(); return; }
+  if (!state.loaded) return;
+  let key = m[1];
+  try { key = decodeURIComponent(key); } catch (e) { /* ใช้ค่าเดิม */ }
+  const p = state.projects.find((x) => x.slug === key) || state.projects.find((x) => x.id === key);
+  if (p) {
+    showDetail(p);
+  } else {
+    navigated = false;
+    history.replaceState(null, '', location.pathname + location.search);
+    hideDetail();
+  }
+}
+
+function openDetail(id) {
+  const p = state.projects.find((x) => x.id === id);
+  if (!p) return;
+  navigated = true;
+  location.hash = '#p=' + encodeURIComponent(p.slug);
+}
+
+function closeDetail() {
+  if (navigated) {
+    navigated = false;
+    history.back();
+  } else {
+    history.replaceState(null, '', location.pathname + location.search);
+    route();
+  }
+}
+
+window.addEventListener('hashchange', route);
 
 async function onSession(session) {
   showShell(session);
@@ -39,6 +83,7 @@ async function load() {
     state.projects = await listProjectOverview();
     state.loaded = true;
     render();
+    route();
   } catch (e) {
     $('grid').innerHTML = `<div class="empty">โหลดข้อมูลไม่สำเร็จ: ${e.message.replace(/[<>&]/g, '')}</div>`;
   }
@@ -85,7 +130,7 @@ $('chips').addEventListener('click', (e) => {
 function openFromEvent(e) {
   if (e.target.closest('a')) return;
   const el = e.target.closest('[data-open]');
-  if (el) openForm(state.projects.find((p) => p.id === el.dataset.open));
+  if (el) openDetail(el.dataset.open);
 }
 $('grid').addEventListener('click', openFromEvent);
 $('due').addEventListener('click', openFromEvent);
@@ -113,7 +158,21 @@ function closeModal() {
   if (lastFocus && lastFocus.focus) lastFocus.focus();
 }
 modal.addEventListener('click', (e) => { if (e.target === modal || e.target.closest('[data-close]')) closeModal(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (!modal.hidden) closeModal();
+  else if (isOpen()) closeDetail();
+});
+
+initDetail({
+  edit: (p) => openForm(p),
+  close: closeDetail,
+  // อัปเดตข้อมูลการ์ดในหน้ารวมจากหน้ารายละเอียด โดยไม่โหลดใหม่
+  sync: (id, patch) => {
+    const p = state.projects.find((x) => x.id === id);
+    if (p) { Object.assign(p, patch); render(); }
+  },
+});
 
 function readForm(form) {
   const g = (n) => form.elements[n].value;

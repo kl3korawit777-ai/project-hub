@@ -48,6 +48,54 @@ export async function deleteProject(id) {
   if (error) throw error;
 }
 
+export async function listMilestones(projectId) {
+  const { data, error } = await need().from('hub_milestones').select('*').eq('project_id', projectId)
+    .order('sort_order', { ascending: true }).order('id', { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
+export async function addMilestone(row) {
+  const { data, error } = await need().from('hub_milestones').insert(row).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateMilestone(id, patch) {
+  const { error } = await need().from('hub_milestones').update(patch).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteMilestone(id) {
+  const { error } = await need().from('hub_milestones').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function saveMilestoneOrder(items) {
+  const results = await Promise.all(items.map((m) =>
+    need().from('hub_milestones').update({ sort_order: m.sort_order }).eq('id', m.id)));
+  const failed = results.find((r) => r.error);
+  if (failed) throw failed.error;
+}
+
+export async function listUpdates(projectId) {
+  const { data, error } = await need().from('hub_updates').select('*').eq('project_id', projectId)
+    .order('date', { ascending: false }).order('id', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function addUpdate(row) {
+  const { data, error } = await need().from('hub_updates').insert(row).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteUpdate(id) {
+  const { error } = await need().from('hub_updates').delete().eq('id', id);
+  if (error) throw error;
+}
+
 export async function listProjectOverview() {
   const { data, error } = await need().from('hub_project_overview').select('*').order('updated_at', { ascending: false });
   if (error) throw error;
