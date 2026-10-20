@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Project Hub · คลังโปรเจกต์</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#EAF0F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B1828" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;700&family=IBM+Plex+Mono&family=IBM+Plex+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
@@ -17,10 +22,16 @@
       <span>Project Hub</span>
     </a>
     <nav class="nav" aria-label="มุมมอง"><a id="nav-home" href="#" aria-current="page">ภาพรวม</a><a id="nav-links" href="#links">ลิงก์เว็บ</a></nav>
-    <span id="count"class="muted mono small"></span>
+    <span id="count" class="muted mono small"></span>
     <input id="q" type="search" class="search" placeholder="ค้นหาชื่อ คำอธิบาย แท็ก" aria-label="ค้นหา" autocomplete="off">
     <button id="new" type="button">+ โปรเจกต์ใหม่</button>
     <button id="logout" type="button" class="ghost" hidden>ออก</button>
+  </div>
+  <div id="offline-bar" class="note-bar off" role="status" hidden>
+    <span id="offline-text"></span><button id="offline-retry" type="button" class="ghost sm">ลองใหม่</button>
+  </div>
+  <div id="update-bar" class="note-bar upd" role="status" hidden>
+    <span>มีเวอร์ชันใหม่</span><button id="update-btn" type="button" class="sm">รีเฟรช</button>
   </div>
 </header>
 

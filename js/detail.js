@@ -1,6 +1,19 @@
 import * as db from './db.js';
 import { percent } from './util.js';
 import { headHtml, linksHtml, schedHtml, msHtml, upsHtml, toast, RING_C } from './ui.js';
+import { isOffline, onOfflineChange } from './net.js';
+import { saveDetail, loadDetail } from './cache.js';
+
+// ออฟไลน์ = อ่านอย่างเดียว: ปิดปุ่ม/ช่องแก้ไขทั้งหมดในหน้านี้
+const LOCK = '[data-d-edit],[data-d-addupd],.ms-check,.grip,[data-ms-del],[data-up-del],#ms-add input,#ms-add button,#up-add input,#up-add textarea,#up-add button';
+const lock = () => {
+  if (isOffline()) document.querySelectorAll('#detail ' + LOCK.split(',').join(', #detail ')).forEach((el) => { el.disabled = true; });
+};
+function blocked() {
+  if (!isOffline()) return false;
+  toast('ออฟไลน์ · แก้ไขไม่ได้');
+  return true;
+}
 
 const $ = (id) => document.getElementById(id);
 let ctx = null;
@@ -27,15 +40,18 @@ function setRing(animate = true) {
   const set = () => { ring.querySelector('.ring-fg').style.strokeDashoffset = RING_C * (1 - pct / 100); };
   if (animate) { ring.getBoundingClientRect(); setTimeout(set, 30); } else set();
 }
-function renderHead() { $('d-head').innerHTML = headHtml(cur, curPct()); setRing(); }
-function renderLinks() { $('d-links').innerHTML = linksHtml(cur); }
+function renderHead() { $('d-head').innerHTML = headHtml(cur, curPct()); setRing(); lock(); }
+function renderLinks() { $('d-links').innerHTML = linksHtml(cur); lock(); }
 function renderSched() { $('d-sched').innerHTML = schedHtml(cur); }
-function renderMs() { $('d-ms').innerHTML = msHtml(ms); }
-function renderUps() { $('d-ups').innerHTML = upsHtml(ups, delUp); }
+function renderMs() { $('d-ms').innerHTML = msHtml(ms); lock(); }
+function renderUps() { $('d-ups').innerHTML = upsHtml(ups, delUp); lock(); }
 function renderAll() { renderHead(); renderLinks(); renderSched(); renderMs(); renderUps(); }
+
+onOfflineChange(() => { if (cur) renderAll(); });
 
 function sync() {
   if (!cur || !loaded()) return;
+  saveDetail(cur.id, ms, ups || []);
   const last = ups && ups[0];
   ctx.sync(cur.id, {
     milestones_total: ms.length,
@@ -71,10 +87,15 @@ export async function showDetail(p) {
     const [a, b] = await Promise.all([db.listMilestones(p.id), db.listUpdates(p.id)]);
     if (t !== token) return;
     ms = a; ups = b;
+    saveDetail(p.id, ms, ups);
     renderMs(); renderUps(); setRing();
   } catch (e) {
     if (t !== token) return;
-    toast('โหลดรายละเอียดไม่สำเร็จ: ' + e.message);
+    const cached = loadDetail(p.id); // ออฟไลน์: ใช้ข้อมูลที่เก็บไว้ตอนเปิดดูครั้งก่อน
+    ms = cached ? cached.ms : [];
+    ups = cached ? cached.ups : [];
+    renderMs(); renderUps(); setRing();
+    if (!cached) toast('ยังไม่มีข้อมูลรายละเอียดที่เก็บไว้ในเครื่อง');
   }
 }
 
@@ -93,6 +114,7 @@ export function hideDetail() {
 async function toggle(id) {
   const m = ms.find((x) => x.id === id);
   if (!m) return;
+  if (blocked()) { renderMs(); return; }
   m.done = !m.done;
   renderMs(); setRing(); sync();
   try {
@@ -105,7 +127,8 @@ async function toggle(id) {
 }
 
 function editTitle(span) {
-  const m = ms.find((x) => x.id === span.closest('.ms').dataset.id);
+  if (blocked()) return;
+  const m =ms.find((x) => x.id === span.closest('.ms').dataset.id);
   const inp = document.createElement('input');
   inp.className = 'm-edit';
   inp.value = m.title;
@@ -140,6 +163,7 @@ function editTitle(span) {
 }
 
 async function removeMilestone(id) {
+  if (blocked()) return;
   const idx = ms.findIndex((x) => x.id === id);
   if (idx < 0) return;
   const [m] = ms.splice(idx, 1);
@@ -154,6 +178,7 @@ async function removeMilestone(id) {
 }
 
 async function addMilestone(form) {
+  if (blocked()) return;
   const title = form.elements.title.value.trim();
   if (!title) { form.elements.title.focus(); return; }
   const btn = form.querySelector('button');
@@ -171,6 +196,7 @@ async function addMilestone(form) {
 }
 
 async function applyOrder(ids, focusId) {
+  if (blocked()) return;
   const before = ms.map((m) => ({ id: m.id, sort_order: m.sort_order }));
   const byId = new Map(ms.map((m) => [m.id, m]));
   ms = ids.map((id) => byId.get(id));
@@ -222,6 +248,7 @@ function startDrag(ev, grip) {
 
 // ---------- updates ----------
 async function addUpdate(form) {
+  if (blocked()) return;
   const note = form.elements.note.value.trim();
   const date = form.elements.date.value;
   const err = $('up-err');
@@ -243,6 +270,7 @@ async function addUpdate(form) {
 }
 
 async function removeUpdate() {
+  if (blocked()) { delUp = null; renderUps(); return; }
   const id = delUp;
   delUp = null;
   try {

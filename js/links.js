@@ -1,5 +1,6 @@
 import { listProjectLinks } from './db.js';
 import { esc, isHttp } from './util.js';
+import { loadProjects } from './cache.js';
 
 const $ = (id) => document.getElementById(id);
 const collator = new Intl.Collator('th');
@@ -91,6 +92,12 @@ export async function showLinks() {
     render();
   } catch (e) {
     if (t !== token) return;
+    const cached = loadProjects(); // ออฟไลน์: ใช้ข้อมูลชุดล่าสุดที่เก็บไว้
+    if (cached) {
+      rows = cached.data.map(({ id, name, web_url }) => ({ id, name, web_url }));
+      render();
+      return;
+    }
     $('llist').innerHTML = `<li class="empty">โหลดไม่สำเร็จ: ${esc(e.message)}</li>`;
   }
 }

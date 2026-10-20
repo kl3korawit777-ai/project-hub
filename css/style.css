@@ -103,6 +103,14 @@ legend{color:var(--muted);font-size:.9rem;padding:0 4px}
   #new{flex:1 1 auto}
 }
 
+/* ---------- PWA: แถบออฟไลน์/เวอร์ชันใหม่ ---------- */
+.note-bar{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:6px 16px;font-size:.9rem;font-weight:600;border-top:1px solid var(--line)}
+.note-bar.off{background:color-mix(in srgb,var(--st-paused) 22%,var(--bg))}
+.note-bar.upd{background:var(--primary);color:#fff;border-color:var(--primary)}
+.note-bar.upd button{background:#fff;color:var(--primary);border-color:#fff}
+button.sm{min-height:36px}
+body.offline #new,button:disabled{cursor:not-allowed}
+
 /* ---------- nav + หน้าลิงก์เว็บ ---------- */
 .nav{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:3px}
 .nav a{padding:4px 14px;border-radius:9px;text-decoration:none;color:var(--fg);font-weight:600;min-height:38px;display:inline-flex;align-items:center;justify-content:center}

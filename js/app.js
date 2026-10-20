@@ -4,6 +4,9 @@ import { chipsHtml, dueHtml, skeletonHtml, cardHtml, formHtml, extraRow, confirm
 import { initDetail, showDetail, hideDetail, isOpen } from './detail.js';
 import { ganttHtml } from './gantt.js';
 import { initLinks, showLinks } from './links.js';
+import { loadProjects, saveProjects, clearCache, formatAt } from './cache.js';
+import { isOffline, setOffline, onOfflineChange } from './net.js';
+import { initPwa } from './pwa.js';
 
 // ---------- ไทม์ไลน์ ----------
 function ganttCollapsed() {
@@ -55,9 +58,35 @@ function showShell(session) {
     state.ganttAnim = true;
     state.view = null;
     document.body.classList.remove('view-links');
+    setOffline(false);
     hideDetail();
   }
 }
+
+// ---------- ออฟไลน์ ----------
+const OFFLINE_SESSION = { user: { email: 'ออฟไลน์' } };
+
+function updateOfflineUi() {
+  const off = isOffline();
+  $('offline-bar').hidden = !off;
+  if (off) {
+    const c = loadProjects();
+    $('offline-text').textContent = `ออฟไลน์ · ข้อมูลเมื่อ ${c ? formatAt(c.at) : '—'}`;
+  }
+  $('new').disabled = off;
+  document.body.classList.toggle('offline', off);
+}
+onOfflineChange(updateOfflineUi);
+
+async function retryOnline() {
+  if (!configured) return;
+  let s = null;
+  try { s = await getSession(); } catch (e) { /* ยังออฟไลน์ */ }
+  await onSession(s);
+}
+$('offline-retry').addEventListener('click', retryOnline);
+window.addEventListener('online', retryOnline);
+window.addEventListener('offline', () => { if (state.authed) setOffline(true); });
 
 // ---------- routing (#p=<slug|id>) ----------
 let navigated = false;
@@ -114,6 +143,9 @@ function closeDetail() {
 window.addEventListener('hashchange', route);
 
 async function onSession(session) {
+  // ออฟไลน์และไม่มี session ที่ใช้ได้: เปิดดูข้อมูลที่เก็บไว้ในเครื่องแบบอ่านอย่างเดียว
+  if (!session && !navigator.onLine && loadProjects()) session = OFFLINE_SESSION;
+  if (!session) clearCache();
   showShell(session);
   if (session) {
     route(); // เปิด #links ได้ทันทีโดยไม่ต้องรอโหลดภาพรวม
@@ -131,19 +163,30 @@ $('form').addEventListener('submit', async (ev) => {
     msg.textContent = 'ผิดพลาด: ' + e.message;
   }
 });
-$('logout').addEventListener('click', () => signOut());
+$('logout').addEventListener('click', async () => {
+  clearCache();
+  try { await signOut(); } catch (e) { await onSession(null); }
+});
 
 // ---------- data / render ----------
 async function load() {
   $('grid').innerHTML = skeletonHtml();
   try {
     state.projects = await listProjectOverview();
-    state.loaded = true;
-    render();
-    route();
+    saveProjects(state.projects);
+    setOffline(false);
   } catch (e) {
-    $('grid').innerHTML = `<div class="empty">โหลดข้อมูลไม่สำเร็จ: ${e.message.replace(/[<>&]/g, '')}</div>`;
+    const cached = loadProjects();
+    if (!cached) {
+      $('grid').innerHTML = `<div class="empty">โหลดข้อมูลไม่สำเร็จ: ${e.message.replace(/[<>&]/g, '')}</div>`;
+      return;
+    }
+    state.projects = cached.data; // ข้อมูลชุดล่าสุดที่เก็บไว้ (อ่านอย่างเดียว)
+    setOffline(true);
   }
+  state.loaded = true;
+  render();
+  route();
 }
 
 function matches(p, q) {
@@ -266,6 +309,7 @@ function showErrors(form, errors) {
 }
 
 function openForm(project) {
+  if (isOffline()) { toast('ออฟไลน์ · แก้ไขไม่ได้'); return; }
   openModal(formHtml(project));
   const form = $('pform');
   const extras = $('extras');
@@ -330,9 +374,18 @@ initLinks();
 
 // ---------- start ----------
 $('today').textContent = thaiToday();
+initPwa({
+  onUpdate: (apply) => {
+    $('update-bar').hidden = false;
+    $('update-btn').onclick = apply;
+  },
+});
+
 if (configured) {
   onAuthChange(onSession);
-  await onSession(await getSession());
+  let session = null;
+  try { session = await getSession(); } catch (e) { /* ออฟไลน์: ให้ onSession ตัดสินจากข้อมูลที่เก็บไว้ */ }
+  await onSession(session);
 } else {
   showShell(null);
 }
